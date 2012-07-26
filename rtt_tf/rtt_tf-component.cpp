@@ -192,10 +192,14 @@ namespace rtt_tf
   geometry_msgs::TransformStamped RTT_TF::lookupTransformAtTimeService(
       const std::string& target,
       const std::string& source,
-      const ros::Time& common_time)
+      const ros::Time& desired_time)
   {
+    ros::Time lookup_time(desired_time);
     tf::StampedTransform stamped_tf;
-    this->lookupTransform(target, source, common_time, stamped_tf);
+    if(!this->canTransform(target, source, desired_time, NULL)) {
+      this->getLatestCommonTime(source, target, lookup_time,NULL);
+    }
+    this->lookupTransform(target, source, lookup_time, stamped_tf);
     geometry_msgs::TransformStamped msg;
     tf::transformStampedTFToMsg(stamped_tf,msg);
     return msg;
