@@ -84,6 +84,10 @@ namespace rtt_tf
       .doc("lookup the most recent transform from source to target")
       .arg("stamped transform", "geometry_msgs::TransformStamped");
 
+    this->addOperation("broadcastTransformList", &RTT_TF::broadcastTransformListService, this, RTT::OwnThread)
+      .doc("broadcast a list of stamped transforms")
+      .arg("list of stamped transforms", "tf::tfMessage");
+
     this->provides("tf")->addOperation("lookupTransform", &RTT_TF::lookupTransformService, this)
       .doc("lookup the most recent transform from source to target")
       .arg("target", "target frame")
@@ -96,8 +100,12 @@ namespace rtt_tf
       .arg("common_time", "common time at which the transform should be computed");
 
     this->provides("tf")->addOperation("broadcastTransform", &RTT_TF::broadcastTransformService, this, RTT::OwnThread)
-      .doc("lookup the most recent transform from source to target")
+      .doc("broadcast a single transform")
       .arg("stamped transform", "geometry_msgs::TransformStamped");
+
+    this->provides("tf")->addOperation("broadcastTransformList", &RTT_TF::broadcastTransformListService, this, RTT::OwnThread)
+      .doc("broadcast a list of stamped transforms")
+      .arg("list of stamped transforms", "tf::tfMessage");
   }
 
   bool RTT_TF::configureHook()
@@ -217,6 +225,22 @@ namespace rtt_tf
     msg_out.transforms.back().child_frame_id = tf::resolve(prop_tf_prefix, msg_out.transforms.back().child_frame_id);
 
     port_tf_out.write(msg_out);
+  }
+
+  void RTT_TF::broadcastTransformListService(
+      const tf::tfMessage &msg_out)
+  {
+    tf::tfMessage msg_resolved = msg_out;
+    // Resolve names
+    for(std::vector<geometry_msgs::TransformStamped>::iterator it=msg_resolved.transforms.begin();
+        it != msg_resolved.transforms.end();
+        ++it)
+    {
+      it->header.frame_id = tf::resolve(prop_tf_prefix, it->header.frame_id);
+      it->child_frame_id = tf::resolve(prop_tf_prefix, it->child_frame_id);
+    }
+
+    port_tf_out.write(msg_resolved);
   }
 
 }//namespace

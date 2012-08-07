@@ -33,6 +33,9 @@ namespace rtt_tf
     void broadcastTransformService(
         const geometry_msgs::TransformStamped &tform);
 
+    void broadcastTransformListService(
+        const tf::tfMessage &msg_out);
+
   public:
     RTT_TF(std::string const& name);
 
